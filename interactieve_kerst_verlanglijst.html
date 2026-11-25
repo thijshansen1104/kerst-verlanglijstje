@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Christmas Wish List - Interactieve Kerstverlanglijst</title>
+    <!-- Tailwind CSS voor responsieve styling en lay-out -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Pacifico/Great Vibes voor de handgeschreven titel en Inter/Patrick Hand voor de invulregels -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lobster+Two:ital,wght@0,700;1,700&family=Pacifico&family=Patrick+Hand&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Basis lettertypen en achtergrond */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f1ed;
+            color: #222222;
+        }
+
+        /* Handgeschreven script stijl voor de "Christmas wish list" titel */
+        .font-script-title {
+            font-family: 'Lobster Two', cursive;
+            font-style: italic;
+            font-weight: 700;
+        }
+
+        /* Subtiel handgeschreven / strak leesbaar lettertype voor op de lijntjes */
+        .font-wishlist-item {
+            font-family: 'Patrick Hand', 'Inter', cursive, sans-serif;
+            letter-spacing: 0.02em;
+        }
+
+        /* De iconische gestreepte kerstrand (rood #c0392b, mosgroen #6d8249 en wit) */
+        .candy-cane-border {
+            padding: 14px;
+            background: repeating-linear-gradient(
+                45deg,
+                #c0392b 0px,
+                #c0392b 18px,
+                #ffffff 18px,
+                #ffffff 23px,
+                #6d8249 23px,
+                #6d8249 41px,
+                #ffffff 41px,
+                #ffffff 46px
+            );
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Binnenste witte vel papier */
+        .paper-sheet {
+            background-color: #ffffff;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Styling voor een enkele wens-regel */
+        .wish-line {
+            border-bottom: 1.5px solid #9ca3af;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .wish-line:focus-within {
+            border-bottom-color: #c0392b;
+            background-color: rgba(192, 57, 43, 0.02);
+        }
+
+        /* Print en PDF optimalisatie (@media print) */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm;
+            }
+            body {
+                background-color: #ffffff !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .candy-cane-border {
+                box-shadow: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 12px !important;
+            }
+            .paper-sheet {
+                padding: 20px 28px 28px 28px !important;
+            }
+            .wish-line {
+                height: 33px !important;
+                border-bottom: 1px solid #888888 !important;
+            }
+            /* Verberg lege actieknopjes bij printen, maar houd klikbare links zichtbaar en bruikbaar in PDF */
+            .btn-add-link {
+                display: none !important;
+            }
+            .print-link-badge {
+                display: inline-flex !important;
+                color: #c0392b !important;
+                text-decoration: underline !important;
+                font-size: 11px !important;
+            }
+            input::placeholder {
+                color: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen py-6 px-3 sm:px-6 flex flex-col items-center justify-start">
+
+    <!-- Subtiele actiebalk boven het papier (wordt verborgen bij printen / PDF) -->
+    <div class="no-print w-full max-w-[820px] mb-5 bg-white/90 backdrop-blur-sm border border-stone-200 rounded-2xl p-3 sm:px-5 shadow-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-sm text-stone-600">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#6d8249] animate-pulse"></span>
+            <span id="save-status" class="font-medium text-stone-700">Automatisch opgeslagen</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Kopieer lijst knop -->
+            <button onclick="copyWishlistToClipboard()" type="button" title="Kopieer je verlanglijstje inclusief linkjes om te delen"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-800 transition active:scale-95 cursor-pointer">
+                <svg class="w-4 h-4 text-[#6d8249]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                </svg>
+                <span>Kopieer lijst</span>
+            </button>
+
+            <!-- Print / Opslaan als PDF knop -->
+            <button onclick="window.print()" type="button" title="Print je verlanglijst of sla op als PDF met klikbare links"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-[#6d8249] hover:bg-[#5b6e3c] text-white shadow-sm transition active:scale-95 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                </svg>
+                <span>Print / PDF</span>
+            </button>
+
+            <!-- Lijst legen knop -->
+            <button onclick="openClearModal()" type="button" title="Maak alle regels in de lijst leeg"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium bg-red-50 hover:bg-red-100 text-[#c0392b] border border-red-200/70 transition active:scale-95 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                <span>Lijst legen</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Het papieren verlanglijst-vel met diagonale kerst-rand -->
+    <main class="candy-cane-border w-full max-w-[820px] rounded-sm">
+        <div class="paper-sheet px-5 py-7 sm:px-11 sm:py-10">
+            
+            <!-- Bovenste gedeelte: Illustraties links + Titel rechts -->
+            <header class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center mb-6 sm:mb-8">
+                
+                <!-- Linkerzijde: Kerstverlichting slinger, kerstboom, cadeautjes en sneeuwvlokjes (Inline SVG) -->
+                <div class="md:col-span-6 flex justify-center">
+                    <svg viewBox="0 0 380 235" class="w-full max-w-[350px] h-auto overflow-visible" aria-label="Kerstillustratie met lampjes, kerstboom en cadeautjes">
+                        <defs>
+                            <!-- Herbruikbare sneeuwvlok definitie -->
+                            <g id="snowflake" stroke="#bce0e3" stroke-width="1.6" stroke-linecap="round">
+                                <line x1="0" y1="-8" x2="0" y2="8"/>
+                                <line x1="-7" y1="-4" x2="7" y2="4"/>
+                                <line x1="-7" y1="4" x2="7" y2="-4"/>
+                                <circle cx="0" cy="0" r="1.5" fill="#bce0e3"/>
+                            </g>
+                            <!-- Kleine witte sneeuwvlok op de boom -->
+                            <g id="tree-flake" stroke="#ffffff" stroke-width="1.3" stroke-linecap="round" opacity="0.85">
+                                <line x1="0" y1="-5" x2="0" y2="5"/>
+                                <line x1="-4.3" y1="-2.5" x2="4.3" y2="2.5"/>
+                                <line x1="-4.3" y1="2.5" x2="4.3" y2="-2.5"/>
+                            </g>
+                        </defs>
+
+                        <!-- 1. KERSTVERLICHTING SLINGER BOVENAAN -->
+                        <g id="christmas-lights">
+                            <!-- Zwarte draad met krulletjes -->
+                            <path d="M 18 32 Q 55 48, 88 26 Q 94 20, 88 18 Q 82 18, 86 27 Q 125 52, 165 28 Q 171 22, 165 19 Q 159 19, 163 28 Q 202 52, 242 28 Q 248 22, 242 19 Q 236 19, 240 28 Q 280 50, 315 30" 
+                                  fill="none" stroke="#2c2c2c" stroke-width="1.4" stroke-linecap="round"/>
+                            
+                            <!-- Lampje 1: Rood (linksboven) -->
+                            <g transform="translate(30, 26) rotate(-18)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#c0392b"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#f9e79f" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 2: Lichtroze (onder) -->
+                            <g transform="translate(53, 41) rotate(22)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#e6b0aa"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#ffffff" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 3: Geel/Oranje (boven) -->
+                            <g transform="translate(76, 23) rotate(5)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#f39c12"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#fef9e7" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 4: Lichtblauw (onder) -->
+                            <g transform="translate(107, 42) rotate(-15)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#85c1c8"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#ffffff" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 5: Mosgroen (boven) -->
+                            <g transform="translate(136, 25) rotate(14)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#6d8249"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#fef9e7" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 6: Geel (onder midden) -->
+                            <g transform="translate(148, 52) rotate(0)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#f39c12"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#fef9e7" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 7: Rood (boven rechts-midden) -->
+                            <g transform="translate(164, 26) rotate(-16)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#c0392b"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#f9e79f" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 8: Lichtroze (onder) -->
+                            <g transform="translate(194, 45) rotate(16)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#e6b0aa"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#ffffff" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 9: Geel (boven) -->
+                            <g transform="translate(218, 25) rotate(4)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#f39c12"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#fef9e7" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 10: Lichtblauw (onder) -->
+                            <g transform="translate(248, 44) rotate(-14)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#85c1c8"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#ffffff" stroke-width="0.9"/>
+                            </g>
+
+                            <!-- Lampje 11: Mosgroen (rechtsboven) -->
+                            <g transform="translate(278, 27) rotate(12)">
+                                <rect x="-3" y="-6" width="6" height="5" rx="1" fill="#4a4a4a"/>
+                                <path d="M -5 -1 C -6 6, -3 15, 0 15 C 3 15, 6 6, 5 -1 Z" fill="#6d8249"/>
+                                <path d="M -1.5 2 L -1 8 L 0 6 L 1 8 L 1.5 2" fill="none" stroke="#fef9e7" stroke-width="0.9"/>
+                            </g>
+                        </g>
+
+                        <!-- 2. SNEEUWVLOKJES OP DE ACHTERGROND -->
+                        <use href="#snowflake" x="22" y="92" transform="scale(1.15)"/>
+                        <use href="#snowflake" x="122" y="84" transform="scale(0.8)"/>
+                        <use href="#snowflake" x="152" y="114" transform="scale(1.05)"/>
+                        <use href="#snowflake" x="218" y="92" transform="scale(0.8)"/>
+                        <use href="#snowflake" x="262" y="80" transform="scale(1.1)"/>
+                        <use href="#snowflake" x="255" y="122" transform="scale(0.8)"/>
+                        <use href="#snowflake" x="315" y="102" transform="scale(1.05)"/>
+
+                        <!-- 3. GROENE KERSTBOOM MET SNEEUWVLOKJES -->
+                        <g id="christmas-tree" transform="translate(0, 6)">
+                            <!-- Stam -->
+                            <rect x="65" y="192" width="22" height="16" rx="2" fill="#6e3b1e"/>
+                            <!-- Gelaagde kerstboom met afgeronde takken -->
+                            <path d="M 76 74 
+                                     C 84 74, 96 102, 106 108 
+                                     C 110 111, 106 116, 98 115 
+                                     C 108 124, 122 134, 128 139 
+                                     C 132 143, 126 149, 116 147 
+                                     C 128 157, 144 168, 150 174 
+                                     C 155 179, 148 187, 134 184 
+                                     C 128 183, 124 182, 121 182 
+                                     C 124 189, 118 196, 106 193 
+                                     C 96 190, 86 193, 76 193 
+                                     C 66 193, 56 190, 46 193 
+                                     C 34 196, 28 189, 31 182 
+                                     C 28 182, 24 183, 18 184 
+                                     C 4 187, -3 179, 2 174 
+                                     C 8 168, 24 157, 36 147 
+                                     C 26 149, 20 143, 24 139 
+                                     C 30 134, 44 124, 54 115 
+                                     C 46 116, 42 111, 46 108 
+                                     C 56 102, 68 74, 76 74 Z" 
+                                  fill="#6d8249" transform="translate(8, 0)"/>
+                            
+                            <!-- Witte sneeuwvlokjes op de kerstboom -->
+                            <use href="#tree-flake" x="83" y="95"/>
+                            <use href="#tree-flake" x="72" y="114"/>
+                            <use href="#tree-flake" x="95" y="122"/>
+                            <use href="#tree-flake" x="58" y="138"/>
+                            <use href="#tree-flake" x="84" y="143"/>
+                            <use href="#tree-flake" x="108" y="146"/>
+                            <use href="#tree-flake" x="45" y="166"/>
+                            <use href="#tree-flake" x="72" y="164"/>
+                            <use href="#tree-flake" x="98" y="168"/>
+                            <use href="#tree-flake" x="124" y="172"/>
+                            <use href="#tree-flake" x="62" y="182"/>
+                            <use href="#tree-flake" x="86" y="183"/>
+                        </g>
+
+                        <!-- 4. CADEAUTJE 1: Lichtblauw met gele strik -->
+                        <g id="gift-blue" transform="translate(174, 134)">
+                            <!-- Strik lussen -->
+                            <path d="M 32 22 C 18 2, 8 12, 16 22 Z" fill="#f39c12"/>
+                            <path d="M 32 22 C 46 2, 56 12, 48 22 Z" fill="#f39c12"/>
+                            <path d="M 24 22 L 10 17 L 13 22 Z" fill="#e67e22"/>
+                            <path d="M 40 22 L 54 17 L 51 22 Z" fill="#e67e22"/>
+                            <!-- Doos basis -->
+                            <rect x="4" y="31" width="56" height="49" fill="#85c1c8"/>
+                            <!-- Deksel -->
+                            <rect x="0" y="21" width="64" height="11" fill="#76b5bd"/>
+                            <!-- Subtiele stipjes op de doos -->
+                            <circle cx="14" cy="43" r="1.5" fill="#ffffff" opacity="0.6"/>
+                            <circle cx="21" cy="56" r="1.5" fill="#ffffff" opacity="0.6"/>
+                            <circle cx="13" cy="68" r="1.5" fill="#ffffff" opacity="0.6"/>
+                            <circle cx="46" cy="44" r="1.5" fill="#ffffff" opacity="0.6"/>
+                            <circle cx="52" cy="58" r="1.5" fill="#ffffff" opacity="0.6"/>
+                            <circle cx="44" cy="70" r="1.5" fill="#ffffff" opacity="0.6"/>
+                            <!-- Verticaal geel lint -->
+                            <rect x="28" y="21" width="8" height="59" fill="#f39c12"/>
+                        </g>
+
+                        <!-- 5. CADEAUTJE 2: Geel met rode strik -->
+                        <g id="gift-yellow" transform="translate(254, 138)">
+                            <!-- Strik lussen -->
+                            <path d="M 32 22 C 18 2, 8 12, 16 22 Z" fill="#c0392b"/>
+                            <path d="M 32 22 C 46 2, 56 12, 48 22 Z" fill="#c0392b"/>
+                            <path d="M 24 22 L 10 17 L 13 22 Z" fill="#962d22"/>
+                            <path d="M 40 22 L 54 17 L 51 22 Z" fill="#962d22"/>
+                            <!-- Doos basis (licht taps toelopend) -->
+                            <polygon points="4,32 60,32 56,76 8,76" fill="#f39c12"/>
+                            <!-- Deksel -->
+                            <rect x="0" y="21" width="64" height="11" fill="#e67e22"/>
+                            <!-- Subtiele golfjes/sterretjes op de doos -->
+                            <path d="M 10 44 Q 16 40, 22 44" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.55"/>
+                            <path d="M 11 58 Q 17 54, 23 58" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.55"/>
+                            <path d="M 41 44 Q 47 40, 53 44" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.55"/>
+                            <path d="M 40 58 Q 46 54, 52 58" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.55"/>
+                            <!-- Verticaal rood lint -->
+                            <rect x="28" y="21" width="8" height="55" fill="#c0392b"/>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Rechterzijde: Sierlijke titel "Christmas wish list" -->
+                <div class="md:col-span-6 text-center flex flex-col items-center justify-center select-none">
+                    <h1 class="font-script-title text-[52px] sm:text-[64px] leading-[1.02] text-[#222222] tracking-normal">
+                        Christmas
+                    </h1>
+                    <p class="font-script-title text-[44px] sm:text-[54px] leading-[1.05] text-[#222222] mt-1">
+                        wish list
+                    </p>
+                    <p class="no-print text-xs text-stone-400 mt-2.5">
+                        Typ je wens op een lijn &amp; klik op <span class="inline-flex items-center align-middle text-stone-500 font-medium">🔗</span> om een link toe te voegen
+                    </p>
+                </div>
+            </header>
+
+            <!-- Twee kolommen met ieder 12 interactieve invulregels (totaal 24 regels) -->
+            <section aria-label="Verlanglijst regels" class="grid grid-cols-1 md:grid-cols-2 gap-x-9 gap-y-0">
+                <!-- Linker kolom (regels 1 t/m 12) -->
+                <div id="column-left" class="flex flex-col"></div>
+                
+                <!-- Rechter kolom (regels 13 t/m 24) -->
+                <div id="column-right" class="flex flex-col mt-2 md:mt-0"></div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer tip buiten print -->
+    <footer class="no-print mt-4 text-center text-xs text-stone-500 max-w-[820px]">
+        Tip: Kies bij <strong>Print / PDF</strong> voor <em>"Opslaan als PDF"</em> om een digitaal kerstlijstje te versturen waarin alle cadeaulinkjes direct aanklikbaar blijven!
+    </footer>
+
+    <!-- Modal voor het toevoegen of bewerken van een linkje bij een wens -->
+    <div id="link-modal" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-xs p-4" role="dialog" aria-modal="true" aria-labelledby="link-modal-title">
+        <div class="bg-white rounded-2xl shadow-xl border border-stone-200 w-full max-w-md p-6 transform transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h2 id="link-modal-title" class="text-lg font-semibold text-stone-800 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-[#6d8249]/15 text-[#6d8249] flex items-center justify-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                    </span>
+                    Link toevoegen aan wens
+                </h2>
+                <button onclick="closeLinkModal()" type="button" class="text-stone-400 hover:text-stone-600 p-1 rounded-lg cursor-pointer" aria-label="Sluiten">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label for="modal-wish-text" class="block text-xs font-medium text-stone-500 uppercase tracking-wider mb-1">Cadeau / Wens</label>
+                    <input id="modal-wish-text" type="text" placeholder="Bijv. Warme wollen sokken"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 focus:border-[#6d8249] focus:ring-2 focus:ring-[#6d8249]/20 outline-none text-stone-800 text-sm">
+                </div>
+
+                <div>
+                    <label for="modal-wish-url" class="block text-xs font-medium text-stone-500 uppercase tracking-wider mb-1">Website link (URL)</label>
+                    <input id="modal-wish-url" type="url" placeholder="https://www.winkel.nl/cadeau..."
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 focus:border-[#6d8249] focus:ring-2 focus:ring-[#6d8249]/20 outline-none text-stone-800 text-sm">
+                    <p class="text-[11px] text-stone-400 mt-1">Plak hier de link van de webshop. https:// wordt automatisch toegevoegd als je dat vergeet.</p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex items-center justify-between gap-2">
+                <button id="btn-remove-link" onclick="removeCurrentLink()" type="button"
+                    class="hidden px-3.5 py-2 rounded-xl text-sm font-medium text-[#c0392b] hover:bg-red-50 transition cursor-pointer">
+                    Link verwijderen
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button onclick="closeLinkModal()" type="button"
+                        class="px-4 py-2 rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100 transition cursor-pointer">
+                        Annuleren
+                    </button>
+                    <button onclick="saveLinkFromModal()" type="button"
+                        class="px-4 py-2 rounded-xl text-sm font-medium bg-[#6d8249] hover:bg-[#5b6e3c] text-white shadow-sm transition cursor-pointer">
+                        Opslaan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bevestigingsmodal voor lijst legen (geen browser confirm()) -->
+    <div id="clear-modal" class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-black/40 backdrop-blur-xs p-4" role="dialog" aria-modal="true">
+        <div class="bg-white rounded-2xl shadow-xl border border-stone-200 w-full max-w-sm p-6 text-center">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-[#c0392b] flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-stone-800">Verlanglijst helemaal legen?</h3>
+            <p class="text-sm text-stone-500 mt-1">Weet je zeker dat je alle ingevulde wensen en linkjes wilt verwijderen?</p>
+            <div class="mt-5 flex items-center justify-center gap-3">
+                <button onclick="closeClearModal()" type="button"
+                    class="px-4 py-2 rounded-xl text-sm font-medium bg-stone-100 hover:bg-stone-200 text-stone-700 transition cursor-pointer">
+                    Annuleren
+                </button>
+                <button onclick="confirmClearWishlist()" type="button"
+                    class="px-4 py-2 rounded-xl text-sm font-medium bg-[#c0392b] hover:bg-[#a93226] text-white shadow-sm transition cursor-pointer">
+                    Ja, alles wissen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notificatie voor feedback (bijv. na kopiëren) -->
+    <div id="toast" class="no-print fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-stone-800 text-white text-sm font-medium px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5">
+            <svg class="w-4 h-4 text-[#8eb057]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="toast-message">Gekopieerd naar klembord!</span>
+        </div>
+    </div>
+
+    <script>
+        // Configuratie: 2 kolommen van elk 12 regels = 24 wensregels
+        const TOTAL_ROWS = 24;
+        const ROWS_PER_COLUMN = 12;
+        const STORAGE_KEY = 'christmas_wishlist_items_v1';
+
+        // State voor alle 24 regels: elk item heeft { text: string, url: string }
+        let wishlistData = Array.from({ length: TOTAL_ROWS }, () => ({ text: '', url: '' }));
+        let activeEditIndex = null;
+
+        /**
+         * Laadt opgeslagen wensen uit localStorage (met foutafhandeling)
+         */
+        function loadWishlist() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed)) {
+                        for (let i = 0; i < TOTAL_ROWS; i++) {
+                            if (parsed[i]) {
+                                wishlistData[i] = {
+                                    text: typeof parsed[i].text === 'string' ? parsed[i].text : '',
+                                    url: typeof parsed[i].url === 'string' ? parsed[i].url : ''
+                                };
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Kon verlanglijst niet laden uit localStorage:', error);
+            }
+        }
+
+        /**
+         * Slaat de huidige wensen direct op in localStorage en update de status-indicator
+         */
+        function saveWishlist() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(wishlistData));
+                const statusEl = document.getElementById('save-status');
+                if (statusEl) {
+                    statusEl.textContent = 'Opgeslagen ✓';
+                    clearTimeout(window.saveStatusTimeout);
+                    window.saveStatusTimeout = setTimeout(() => {
+                        statusEl.textContent = 'Automatisch opgeslagen';
+                    }, 1800);
+                }
+            } catch (error) {
+                console.error('Kon verlanglijst niet opslaan:', error);
+            }
+        }
+
+        /**
+         * Normaliseert een ingevoerde URL zodat deze altijd met http:// of https:// begint
+         */
+        function normalizeUrl(rawUrl) {
+            const trimmed = rawUrl.trim();
+            if (!trimmed) return '';
+            if (/^https?:\/\//i.test(trimmed)) {
+                return trimmed;
+            }
+            return 'https://' + trimmed;
+        }
+
+        /**
+         * Bouwt de 24 interactieve regels op in de linker- en rechterkolom
+         */
+        function renderWishlistRows() {
+            const leftCol = document.getElementById('column-left');
+            const rightCol = document.getElementById('column-right');
+            leftCol.innerHTML = '';
+            rightCol.innerHTML = '';
+
+            for (let i = 0; i < TOTAL_ROWS; i++) {
+                const item = wishlistData[i];
+                const hasLink = Boolean(item.url && item.url.trim() !== '');
+                const targetColumn = i < ROWS_PER_COLUMN ? leftCol : rightCol;
+
+                const row = document.createElement('div');
+                row.className = 'wish-line group relative flex items-center justify-between h-[38px] sm:h-[40px] px-1 gap-1.5';
+
+                // Tekstveld waar de gebruiker direct in kan typen
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = item.text;
+                input.dataset.index = i;
+                input.setAttribute('aria-label', `Wens regel ${i + 1}`);
+                input.placeholder = i === 0 ? 'Typ hier je eerste kerstwens...' : '';
+                input.className = 'font-wishlist-item w-full bg-transparent outline-none text-[19px] sm:text-[20px] text-[#222222] placeholder:text-stone-300 placeholder:text-base truncate';
+
+                // Direct opslaan tijdens typen
+                input.addEventListener('input', (e) => {
+                    wishlistData[i].text = e.target.value;
+                    saveWishlist();
+                });
+
+                // Sneltoets: Enter gaat naar de volgende regel
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const nextInput = document.querySelector(`input[data-index="${i + 1}"]`);
+                        if (nextInput) nextInput.focus();
+                    }
+                });
+
+                // Actie-container rechts op de lijn (voor link openen en link toevoegen/bewerken)
+                const actions = document.createElement('div');
+                actions.className = 'flex items-center gap-1 shrink-0';
+
+                // Als er een link is opgeslagen: toon een klikbare "Open link" knop/badge
+                if (hasLink) {
+                    const linkAnchor = document.createElement('a');
+                    linkAnchor.href = item.url;
+                    linkAnchor.target = '_blank';
+                    linkAnchor.rel = 'noopener noreferrer';
+                    linkAnchor.title = `Open link in nieuw tabblad: ${item.url}`;
+                    linkAnchor.className = 'print-link-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#6d8249]/15 text-[#526434] hover:bg-[#6d8249] hover:text-white transition';
+                    linkAnchor.innerHTML = `
+                        <span>Link</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                    `;
+                    actions.appendChild(linkAnchor);
+                }
+
+                // Knopje om een link toe te voegen of te bewerken
+                const editLinkBtn = document.createElement('button');
+                editLinkBtn.type = 'button';
+                editLinkBtn.onclick = () => openLinkModal(i);
+                editLinkBtn.title = hasLink ? 'Link bewerken of verwijderen' : 'Linkje toevoegen aan deze wens';
+                editLinkBtn.className = hasLink
+                    ? 'btn-add-link p-1.5 rounded-lg text-stone-400 hover:text-[#c0392b] hover:bg-stone-100 transition cursor-pointer'
+                    : 'btn-add-link p-1.5 rounded-lg text-stone-300 opacity-70 sm:opacity-35 group-hover:opacity-100 focus:opacity-100 hover:text-[#6d8249] hover:bg-stone-100 transition cursor-pointer';
+                
+                editLinkBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                `;
+                actions.appendChild(editLinkBtn);
+
+                row.appendChild(input);
+                row.appendChild(actions);
+                targetColumn.appendChild(row);
+            }
+        }
+
+        /**
+         * Opent de modal om een URL en eventueel tekst voor een specifieke regel te bewerken
+         */
+        function openLinkModal(index) {
+            activeEditIndex = index;
+            const item = wishlistData[index];
+            const modal = document.getElementById('link-modal');
+            const textInput = document.getElementById('modal-wish-text');
+            const urlInput = document.getElementById('modal-wish-url');
+            const removeBtn = document.getElementById('btn-remove-link');
+
+            textInput.value = item.text;
+            urlInput.value = item.url;
+
+            if (item.url) {
+                removeBtn.classList.remove('hidden');
+            } else {
+                removeBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Focus direct op het URL-veld voor snel plakken
+            setTimeout(() => urlInput.focus(), 50);
+        }
+
+        /**
+         * Sluit de link-modal
+         */
+        function closeLinkModal() {
+            const modal = document.getElementById('link-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activeEditIndex = null;
+        }
+
+        /**
+         * Slaat de wijzigingen vanuit de link-modal op
+         */
+        function saveLinkFromModal() {
+            if (activeEditIndex === null) return;
+            const textVal = document.getElementById('modal-wish-text').value.trim();
+            const rawUrlVal = document.getElementById('modal-wish-url').value;
+            const normalizedUrl = normalizeUrl(rawUrlVal);
+
+            // Als de gebruiker wel een link plakt maar nog geen naam had ingevuld, gebruik een nette standaardnaam
+            let finalText = textVal;
+            if (!finalText && normalizedUrl) {
+                try {
+                    const hostname = new URL(normalizedUrl).hostname.replace(/^www\./, '');
+                    finalText = `Cadeau (${hostname})`;
+                } catch {
+                    finalText = 'Cadeau link';
+                }
+            }
+
+            wishlistData[activeEditIndex] = {
+                text: finalText,
+                url: normalizedUrl
+            };
+
+            saveWishlist();
+            renderWishlistRows();
+            closeLinkModal();
+            if (normalizedUrl) {
+                showToast('Linkje opgeslagen bij je wens!');
+            }
+        }
+
+        /**
+         * Verwijdert alleen de link bij de geselecteerde wens
+         */
+        function removeCurrentLink() {
+            if (activeEditIndex === null) return;
+            wishlistData[activeEditIndex].text = document.getElementById('modal-wish-text').value;
+            wishlistData[activeEditIndex].url = '';
+            saveWishlist();
+            renderWishlistRows();
+            closeLinkModal();
+            showToast('Link verwijderd');
+        }
+
+        /**
+         * Opent de bevestigingsmodal voor het legen van de lijst
+         */
+        function openClearModal() {
+            const modal = document.getElementById('clear-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        /**
+         * Sluit de bevestigingsmodal
+         */
+        function closeClearModal() {
+            const modal = document.getElementById('clear-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        /**
+         * Wist alle regels na bevestiging
+         */
+        function confirmClearWishlist() {
+            wishlistData = Array.from({ length: TOTAL_ROWS }, () => ({ text: '', url: '' }));
+            saveWishlist();
+            renderWishlistRows();
+            closeClearModal();
+            showToast('De verlanglijst is helemaal leeggemaakt');
+        }
+
+        /**
+         * Kopieert alle ingevulde wensen en linkjes als nette tekst naar het klembord
+         */
+        function copyWishlistToClipboard() {
+            const filledItems = wishlistData.filter(item => item.text.trim() !== '' || item.url.trim() !== '');
+            
+            if (filledItems.length === 0) {
+                showToast('Vul eerst minstens één wens in om te kopiëren!');
+                return;
+            }
+
+            let formattedText = '🎄 Mijn Kerst Verlanglijstje 🎁\n\n';
+            filledItems.forEach((item, idx) => {
+                const title = item.text.trim() || 'Cadeau';
+                if (item.url.trim()) {
+                    formattedText += `${idx + 1}. ${title} — ${item.url.trim()}\n`;
+                } else {
+                    formattedText += `${idx + 1}. ${title}\n`;
+                }
+            });
+
+            // Gebruik een verborgen textarea + execCommand('copy') voor maximale compatibiliteit in iframes
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = formattedText;
+            tempTextarea.style.position = 'fixed';
+            tempTextarea.style.left = '-9999px';
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('Verlanglijst inclusief linkjes gekopieerd!');
+            } catch (err) {
+                showToast('Kopiëren mislukt, probeer het opnieuw.');
+            } finally {
+                document.body.removeChild(tempTextarea);
+            }
+        }
+
+        /**
+         * Toont een subtiele melding onderin beeld
+         */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            clearTimeout(window.toastTimeout);
+            window.toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 2800);
+        }
+
+        // Sluit modals met Escape-toets en sla link-modal op met Enter
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLinkModal();
+                closeClearModal();
+            } else if (e.key === 'Enter' && activeEditIndex !== null) {
+                e.preventDefault();
+                saveLinkFromModal();
+            }
+        });
+
+        // Initialiseer applicatie bij laden van de pagina
+        window.addEventListener('DOMContentLoaded', () => {
+            loadWishlist();
+            renderWishlistRows();
+        });
+    </script>
+</body>
+</html>
